@@ -50,14 +50,28 @@ class main:
 					recent = f.readlines()
 					f.close()
 
+				print(recent)
+
 				for i in range(len(recent)):
 					recent[i] = recent[i].replace("\n", '')
 
-				recent = recent.reverse()
+				print(recent)
+
+				recent.reverse()
 
 				print(recent)
 
-				easygui.choicebox("please select one of your recent choices", choices = recent)
+				if len(recent) < 2:
+					easygui.msgbox("not enough history, please create a new search paramter first")
+					continue
+				ch = easygui.choicebox("please select one of your recent choices", choices = recent)
+
+				if ch == None:
+					continue
+
+				folder, Keywords = ch.split("    <SEP>    ")
+				Keywords = Keywords.split("|")
+				easygui.msgbox(self.search(folder, Keywords, SaveLocation))
 
 			if method == None:
 				print("Quitting")
@@ -113,8 +127,8 @@ class main:
 			os.mkdir(f"{SaveLocation}")
 
 		for word in Keywords:
-			if not os.path.exists(f"{SaveLocation}/{word}"):
-				os.mkdir(f"{SaveLocation}/{word}")
+			if not os.path.exists(f"{SaveLocation}/{os.path.basename(folder)} - {word}"):
+				os.mkdir(f"{SaveLocation}/{os.path.basename(folder)} - {word}")
 
 		numresult = 0
 		for word in Keywords:
@@ -122,13 +136,13 @@ class main:
 			if isinstance(output[word], list):
 				for i in range(len(output[word])):
 					if isinstance(output[word][i], list):
-						shutil.copy(output[word][i][0], f"{SaveLocation}/{word}")
+						shutil.copy(output[word][i][0], f"{SaveLocation}/{os.path.basename(folder)} - {word}")
 						numresult += 1
 					if not isinstance(output[word][i], list):
-						shutil.copy(output[word][i], f"{SaveLocation}/{word}")
+						shutil.copy(output[word][i], f"{SaveLocation}/{os.path.basename(folder)} - {word}")
 						numresult += 1
 			if not isinstance(output[word], list):
-				shutil.copy(output[word][0], f"{SaveLocation}/{word}")
+				shutil.copy(output[word][0], f"{SaveLocation}/{os.path.basename(folder)} - {word}")
 				numresult += 1
 
 		return f"Your files have been saved to {SaveLocation}\n\nThere was a total of {numresult} results"
