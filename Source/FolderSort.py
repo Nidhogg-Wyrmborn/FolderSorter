@@ -19,9 +19,6 @@ from glob import glob
 from threading import Thread
 from git import Repo
 
-# functions
-
-
 # class
 #print("starting main program")
 class main:
