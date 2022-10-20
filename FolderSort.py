@@ -6,26 +6,78 @@
 import easygui
 import os
 import shutil
+import sys
+import hashlib
+import random
+import requests
 
 # import - as -
 
 
 # from - import -
 from glob import glob
+from threading import Thread
+from git import Repo
 
 # functions
 
 
 # class
-
+#print("starting main program")
 class main:
 	def __init__(self):
+		self.version = "0.7.1"
+		v1, v2, v3 = self.version.split(".")
+		print(self.version)
+		print(f"v1: {v1}, v2: {v2}, v3: {v3}")
+		self.v1 = v1
+		self.v2 = v2
+		self.v3 = v3
 		self.choices = ["select a folder",
 						"state keyphrases",
 						"select save location",
 						"search",
 						"search recent"]
+		update = self.update()
+		if update:
+			yesno = ["yes", "no"]
+			c = easygui.buttonbox("update available, would you like to update?", choices = yesno)
+			if c == yesno[0]:
+				f = self.performUpdate()
+				if f:
+					easygui.msgbox("update complete, restarting program")
+					Thread(target=lambda: os.system(os.path.basename(sys.argv[0])), daemon=False).start()
+					#print("quit")
+					quit()
+				if not f:
+					easygui.msgbox("update failed, try to reconnect to the internet.\n\nfor the meantime the current update will still work.")
+
 		self.GUI()
+
+	def update(self):
+		## check for update, for test cases it will say update until the test.dat file is reset
+		updateUrl = "https://pastebin.com/raw/K746829t"
+		content = requests.get(updateUrl)
+		version = content.text
+		print(version)
+		v1, v2, v3 = version.split(".")
+		if v1 > self.v1:
+			return True
+		if v1 <= self.v1:
+			if v2 > self.v2:
+				return True
+			if v2 <= self.v2:
+				if v3 > self.v3:
+					return True
+				if v3 <= self.v3:
+					return False
+
+	def performUpdate(self):
+		## pretend to do the update (show a progress bar based on content downloaded and then return true for finish and false for fail)
+		try:
+			Repo.clone_from(git_url, "./Update")
+		except:
+			return False
 
 	def GUI(self):
 		folder = None
