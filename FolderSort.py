@@ -26,7 +26,7 @@ from git import Repo
 #print("starting main program")
 class main:
 	def __init__(self):
-		self.version = "0.7.1"
+		self.version = "0.7.0"
 		v1, v2, v3 = self.version.split(".")
 		print(self.version)
 		print(f"v1: {v1}, v2: {v2}, v3: {v3}")
@@ -38,15 +38,15 @@ class main:
 						"select save location",
 						"search",
 						"search recent"]
-		update = self.update()
+		update, version = self.update()
 		if update:
 			yesno = ["yes", "no"]
 			c = easygui.buttonbox("update available, would you like to update?", choices = yesno)
 			if c == yesno[0]:
-				f = self.performUpdate()
+				f = self.performUpdate(version)
 				if f:
 					easygui.msgbox("update complete, restarting program")
-					Thread(target=lambda: os.system(os.path.basename(sys.argv[0])), daemon=False).start()
+					Thread(target=self.cleanup, daemon=False).start()
 					#print("quit")
 					quit()
 				if not f:
@@ -54,29 +54,53 @@ class main:
 
 		self.GUI()
 
+	def cleanup(self):
+		shutil.move("./tmp/FolderSort.exe", "./FolderSort.exe")
+		os.system(f"FolderSort.exe")
+
 	def update(self):
 		## check for update, for test cases it will say update until the test.dat file is reset
 		updateUrl = "https://pastebin.com/raw/K746829t"
-		content = requests.get(updateUrl)
+		content = requests.get(updateUrl, verify=False)
 		version = content.text
 		print(version)
 		v1, v2, v3 = version.split(".")
 		if v1 > self.v1:
-			return True
+			return True, version
 		if v1 <= self.v1:
 			if v2 > self.v2:
-				return True
+				return True, version
 			if v2 <= self.v2:
 				if v3 > self.v3:
-					return True
+					return True, version
 				if v3 <= self.v3:
-					return False
+					return False, version
 
-	def performUpdate(self):
+	def performUpdate(self,version):
 		## pretend to do the update (show a progress bar based on content downloaded and then return true for finish and false for fail)
 		try:
-			Repo.clone_from(git_url, "./Update")
-		except:
+			print("making tmp")
+			os.mkdir("./tmp")
+			print("set url")
+			url = f"https://raw.github.com/Nidhogg-Wyrmborn/FolderSorterMain/main/{version}/FolderSort.exe"
+			print("open url as stream")
+			with requests.get(url, stream=True, verify=False) as r:
+				print("raise for status")
+				r.raise_for_status()
+				print("open file as f")
+				with open("./tmp/FolderSort.exe", 'wb') as f:
+					print("create counter")
+					num = 0
+					for chunk in r.iter_content(chunk_size=8192):
+						print(f"opening chunk {chunk}")
+						print("writing chunk")
+						f.write(chunk)
+						print("chunk written")
+						num += 1
+						print(f"finished chunk No. {num}")
+			return True
+		except Exception as e:
+			print(e)
 			return False
 
 	def GUI(self):
